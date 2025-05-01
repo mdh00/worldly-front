@@ -13,7 +13,7 @@ export const getAllCountries = async () => {
 // Get country by code
 export const getCountryByCode = async (code) => {
     try {
-        const response = await api.get(`/alpha/${code}`);
+        const response = await api.get(`/alpha/${code}?fields=name,population,region,languages,flags,currencies,subregion,timezones,capital,cca2`);
         return response.data;
     } catch (error) {
         throw new Error(error.message || "Failed to fetch country by code");
