@@ -2,8 +2,15 @@ import { useEffect, useState } from "react";
 import { getCountryByCode } from "@/api/service";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useClerk, useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
+import { useFavorites } from "@/hooks/useFavorites";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { IoHeartOutline } from "react-icons/io5";
+import { IoHeartSharp } from "react-icons/io5";
 
 const CountryDetailsPage = () => {
     const [country, setCountry] = useState(null);
@@ -11,18 +18,14 @@ const CountryDetailsPage = () => {
     const [error, setError] = useState(null);
 
     const { code } = useParams();
-    const { clerk } = useClerk();
-    const { user, isSignedIn } = useUser();
-    const navigate = useNavigate();
-
-    const favorites = user?.unsafeMetadata?.favorites || [];
+    const { toggleFavorite, isFavorite } = useFavorites();
 
     useEffect(() => {
         const fetchCountry = async () => {
             try {
                 setLoading(true);
                 const response = await getCountryByCode(code);
-                setCountry(response[0]);
+                setCountry(response);
             } catch (error) {
                 console.error("Error fetching country data:", error);
                 setError("Failed to load country data");
@@ -32,29 +35,7 @@ const CountryDetailsPage = () => {
         };
 
         fetchCountry();
-    }, [code, getCountryByCode]);
-
-    const addFavorite = async (cca2) => {
-        const existing = user?.unsafeMetadata?.favorites || [];
-        if (existing.includes(cca2)) return;
-
-        await user.update({
-            unsafeMetadata: {
-                favorites: [...existing, cca2],
-            },
-        });
-    };
-
-    const removeFavorite = async (cca2) => {
-        const existing = user?.unsafeMetadata?.favorites || [];
-        const updated = existing.filter(code => code !== cca2);
-
-        await user.update({
-            unsafeMetadata: {
-                favorites: updated,
-            },
-        });
-    };
+    }, [code]);
 
     if (loading) {
         return (
@@ -89,38 +70,40 @@ const CountryDetailsPage = () => {
         return Object.values(country.languages).join(', ');
     };
 
-    const handleAddAndRemoveFavorite = async (cca2) => {
-        if (!isSignedIn) {
-            navigate("/sign-in", { replace: true });
-            return;
-        }
-        if (favorites.includes(cca2)) {
-            await removeFavorite(cca2);
-        } else {
-            await addFavorite(cca2);
-        }
-    }
-
     return (
-        <div className="min-h-screen bg-black text-white p-4 md:p-8">
+        <div className="min-h-screen bg-black text-white p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="flex flex-col md:flex-row items-center mb-8 bg-indigo-950 rounded-lg overflow-hidden">
                     <div className="w-full md:w-1/2 p-6">
                         <div className="flex justify-start">
-                            <Button
-                                onClick={() => handleAddAndRemoveFavorite(country.cca2)}
-                                variant="ghost"
-                                className={`hover:bg-emerald-400 p-0 md:p-3 -mt-4`}
-                            >
-                                {favorites.includes(country.cca2) ? "❤️" : "🤍"} Favorite
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <span
+                                            onClick={() => toggleFavorite(country.cca2)}
+                                            className={`cursor-pointer`}
+                                        >
+                                            {isFavorite(country.cca2) ? (
+                                                <IoHeartSharp className="text-red-600 text-3xl" />
+                                            ) : (
+                                                <IoHeartOutline className="text-gray-400 text-3xl" />
+                                            )}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="text-sm text-emerald-400 font-semibold">
+                                            {isFavorite(country.cca2) ? "Remove from favorites" : "Add to favorites"}
+                                        </p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
 
                         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-emerald-400">
                             {country.name.common}
                         </h1>
                         {country.name.official !== country.name.common && (
-                            <p className="text-lg mb-4 text-emerald-200">
+                            <p className="text-lg mb-4 text-white">
                                 {country.name.official}
                             </p>
                         )}
@@ -133,7 +116,7 @@ const CountryDetailsPage = () => {
                             <img
                                 src={country.flags.svg}
                                 alt={`Flag of ${country.name.common}`}
-                                className="h-48 shadow-lg rounded border-2 border-emerald-400"
+                                className="h-48 shadow-lg rounded"
                             />
                         )}
                     </div>
@@ -204,7 +187,7 @@ const InfoCard = ({ title, children, icon }) => (
 );
 
 const InfoRow = ({ label, value }) => (
-    <div className="flex flex-col sm:flex-row sm:justify-between border-b border-black pb-2">
+    <div className="flex flex-row justify-between border-b border-black pb-2">
         <span className="font-semibold text-emerald-200">{label}:</span>
         <span className="text-white">{value}</span>
     </div>
