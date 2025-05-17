@@ -1,13 +1,4 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
 import { getAllCountries, searchCountriesByName, searchCountriesByRegion, searchCountriesBySubregion } from '@/api/service'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -21,9 +12,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination"
-import { FaPeopleGroup } from "react-icons/fa6";
-import { PiCityBold } from "react-icons/pi";
-import { FaMapMarkedAlt } from "react-icons/fa";
+import CountryCard from '@/components/CountryCard'
 
 function HomePage() {
     const [countries, setCountries] = useState([])
@@ -47,9 +36,11 @@ function HomePage() {
     useEffect(() => {
         const savedRegion = sessionStorage.getItem('selectedRegion') || ""
         const savedSubregion = sessionStorage.getItem('selectedSubregion') || ""
+        const savedSearchTerm = sessionStorage.getItem('searchTerm') || ""
 
         setSelectedRegion(savedRegion)
         setSelectedSubregion(savedSubregion)
+        setSearchTerm(savedSearchTerm)
     }, [])
 
     // Fetch all countries
@@ -89,7 +80,7 @@ function HomePage() {
 
 
     useEffect(() => {
-        const HomePagelyFilters = async () => {
+        const applyFilters = async () => {
             setLoading(true)
             try {
                 let results = []
@@ -132,14 +123,18 @@ function HomePage() {
         }
 
         const timeoutId = setTimeout(() => {
-            HomePagelyFilters()
+            applyFilters()
         }, 300)
 
         return () => clearTimeout(timeoutId)
     }, [searchTerm, selectedRegion, selectedSubregion, itemsPerPage])
 
     const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value)
+        const value = e.target.value
+        setSearchTerm(value)
+        
+        // Save search term to sessionStorage
+        sessionStorage.setItem('searchTerm', value)
     }
 
     // Handle region selection and save to sessionStorage
@@ -186,6 +181,7 @@ function HomePage() {
         // Clear from sessionStorage
         sessionStorage.removeItem('selectedRegion')
         sessionStorage.removeItem('selectedSubregion')
+        sessionStorage.removeItem('searchTerm')
 
         setLoading(true)
         try {
@@ -227,6 +223,7 @@ function HomePage() {
     if (countries.length === 0) {
         return <div className="flex justify-center items-center h-screen text-red-500">No countries found</div>
     }
+    
     return (
         <div className="md:container md:mx-auto px-12 py-8 font-roboto">
             <div className="mb-8 max-w-7xl mx-auto">
@@ -285,7 +282,6 @@ function HomePage() {
                     </div>
                 </div>
 
-
                 {/* Results count */}
                 <div className="mb-4 text-sm text-muted-foreground">
                     Showing {currentItems.length} of {filteredCountries.length} countries
@@ -295,33 +291,7 @@ function HomePage() {
                 {currentItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {currentItems.map((country) => (
-                            <Link to={`/country/${country.cca2}`} key={country.name.common} className="no-underline">
-                                <Card key={country.name.common} className="h-full flex flex-col">
-                                    <CardHeader className="pb-2">
-                                        <CardTitle className="text-2xl text-emerald-400 font-bold truncate">{country.name.common}</CardTitle>
-                                        <CardDescription className="text-sm">{country.region}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow pb-2">
-                                        <div className="aspect-video relative mb-3">
-                                            <img
-                                                src={country.flags.png || "/placeholder.svg"}
-                                                alt={`Flag of ${country.name.common}`}
-                                                className="w-full h-full object-cover rounded"
-                                            />
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="flex flex-col items-start gap-1 pt-0">
-                                        <div className='flex justify-between w-full'>
-                                            <p className="text-sm flex gap-2 items-center"><FaMapMarkedAlt /> {country.subregion || "N/A"}</p>
-                                            <p className="text-sm flex gap-2 font-bold items-center">{country.cca2}</p>
-                                        </div>
-                                        <div className='flex justify-between w-full'>
-                                            <p className="text-sm flex gap-2 items-center"><PiCityBold /> {country.capital?.[0] || "N/A"}</p>
-                                            <p className="text-sm flex gap-2 items-center"><FaPeopleGroup /> {country.population.toLocaleString()}</p>
-                                        </div>
-                                    </CardFooter>
-                                </Card>
-                            </Link>
+                            <CountryCard key={country.name.common} country={country} />
                         ))}
                     </div>
                 ) : (
