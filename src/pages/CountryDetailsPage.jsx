@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCountryByCode } from "@/api/service";
 import { useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/hooks/useFavorites";
 import {
     Tooltip,
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/tooltip"
 import { IoHeartOutline } from "react-icons/io5";
 import { IoHeartSharp } from "react-icons/io5";
+import InfoCard, { InfoRow } from "@/components/InfoCard";
 
 const CountryDetailsPage = () => {
     const [country, setCountry] = useState(null);
@@ -74,7 +74,7 @@ const CountryDetailsPage = () => {
         <div className="min-h-screen bg-black text-white p-8">
             <div className="max-w-4xl mx-auto">
                 <div className="flex flex-col md:flex-row items-center mb-8 bg-indigo-950 rounded-lg overflow-hidden">
-                    <div className="w-full md:w-1/2 p-6">
+                    <div className="w-full md:w-1/2 p-4 md:p-6">
                         <div className="flex justify-start">
                             <TooltipProvider>
                                 <Tooltip>
@@ -84,9 +84,9 @@ const CountryDetailsPage = () => {
                                             className={`cursor-pointer`}
                                         >
                                             {isFavorite(country.cca2) ? (
-                                                <IoHeartSharp className="text-red-600 text-3xl" />
+                                                <IoHeartSharp className="text-red-600 text-2xl md:text-3xl" />
                                             ) : (
-                                                <IoHeartOutline className="text-gray-400 text-3xl" />
+                                                <IoHeartOutline className="text-gray-400 text-2xl md:text-3xl" />
                                             )}
                                         </span>
                                     </TooltipTrigger>
@@ -107,16 +107,16 @@ const CountryDetailsPage = () => {
                                 {country.name.official}
                             </p>
                         )}
-                        <div className="inline-block px-3 py-1 bg-emerald-400 text-indigo-950 rounded-md font-semibold mb-2">
+                        <div className="inline-block px-3 py-1 bg-emerald-400 text-indigo-950 rounded-md font-semibold md:mb-2">
                             {country.cca2}
                         </div>
                     </div>
-                    <div className="md:w-1/2 flex justify-center p-4">
+                    <div className="md:w-1/2 flex justify-center mb-6 md:mb-0 md:p-4">
                         {country.flags?.svg && (
                             <img
                                 src={country.flags.svg}
                                 alt={`Flag of ${country.name.common}`}
-                                className="h-48 shadow-lg rounded"
+                                className="h-30 md:h-48 shadow-lg rounded"
                             />
                         )}
                     </div>
@@ -139,25 +139,23 @@ const CountryDetailsPage = () => {
                     </InfoCard>
                 </div>
 
-                <div className="mt-6 bg-indigo-950 rounded-lg p-6">
-                    <h2 className="text-xl font-bold mb-4 flex items-center">
-                        <span className="mr-2">🕒</span>
-                        <span className="text-emerald-400">Timezones</span>
-                    </h2>
-                    <div className="flex flex-wrap gap-2">
-                        {country.timezones && country.timezones.length > 0 ? (
-                            country.timezones.map((timezone, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1 bg-indigo-950 rounded-md border border-emerald-400"
-                                >
-                                    {timezone}
-                                </span>
-                            ))
-                        ) : (
-                            <span>No timezone data available</span>
-                        )}
-                    </div>
+                <div className="mt-6 md:mt-8">
+                    <InfoCard title="Timezones" icon="🕒" className="mt-6">
+                        <div className="flex flex-wrap gap-2">
+                            {country.timezones && country.timezones.length > 0 ? (
+                                country.timezones.map((timezone, index) => (
+                                    <span
+                                        key={index}
+                                        className="px-3 py-1 bg-indigo-950 rounded-md border border-emerald-400"
+                                    >
+                                        {timezone}
+                                    </span>
+                                ))
+                            ) : (
+                                <span>No timezone data available</span>
+                            )}
+                        </div>
+                    </InfoCard>
                 </div>
 
                 <div className="mt-8 flex justify-center">
@@ -172,25 +170,5 @@ const CountryDetailsPage = () => {
         </div>
     );
 };
-
-// Helper components
-const InfoCard = ({ title, children, icon }) => (
-    <div className="bg-indigo-950 rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-4 flex items-center">
-            <span className="mr-2">{icon}</span>
-            <span className="text-emerald-400">{title}</span>
-        </h2>
-        <div className="space-y-3">
-            {children}
-        </div>
-    </div>
-);
-
-const InfoRow = ({ label, value }) => (
-    <div className="flex flex-row justify-between border-b border-black pb-2">
-        <span className="font-semibold text-emerald-200">{label}:</span>
-        <span className="text-white">{value}</span>
-    </div>
-);
 
 export default CountryDetailsPage;
